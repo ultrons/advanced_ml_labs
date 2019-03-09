@@ -1,0 +1,49 @@
+trainingInput:
+  scaleTier: CUSTOM
+  masterType: large_model
+  workerType: large_model
+  parameterServerType: large_model
+  workerCount: 9
+  parameterServerCount: 3
+  hyperparameters:
+    hyperparameterMetricTag: mpcAccuracy
+    goal: MAXIMIZE
+    maxTrials: 2
+    maxParallelTrials: 2
+    enableTrialEarlyStopping: True
+    params:
+    - parameterName: batch_size
+      type: INTEGER
+      minValue: 8
+      maxValue: 512
+      scaleType: UNIT_LOG_SCALE
+    - parameterName: DNN_LR
+      type: DOUBLE
+      minValue: 0.00001
+      maxValue: 0.5
+      scaleType: UNIT_LOG_SCALE
+    - parameterName: LIN_LR
+      type: DOUBLE
+      minValue: 0.00001
+      maxValue: 0.5
+      scaleType: UNIT_LOG_SCALE
+    - parameterName: LIN_LR_POWER
+      type: DOUBLE
+      minValue: -5
+      maxValue: 0.0
+      scaleType: UNIT_LINEAR_SCALE
+    - parameterName: LIN_L1
+      type: DOUBLE
+      minValue: 0.01
+      maxValue: 1
+      scaleType: UNIT_LOG_SCALE
+    - parameterName: LIN_L2
+      type: DOUBLE
+      minValue: 0.01
+      maxValue: 1
+      scaleType: UNIT_LOG_SCALE
+    - parameterName: LIN_SHRINKAGE
+      type: DOUBLE
+      minValue: 0.00001
+      maxValue: 1
+      scaleType: UNIT_REVERSE_LOG_SCALE
