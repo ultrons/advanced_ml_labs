@@ -13,33 +13,28 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-KFP=0
+
 BUCKET=$1
+if [ "$#" -lt 1 ]; then
+    echo "Usage Error!"
+    exit
+fi
 set -e
 while [ $# -ne 0 ]; do
     case "$1" in
-       -h|--help)      echo "Usage: ./hptune.sh --bucket <bucket-name>"
+       -h|--help)      echo "Usage: ./train.sh --bucket <bucket-name>"
                         exit
                         shift
                         ;;
        -b|--bucket)     BUCKET=$2
                         shift
                         ;;
-       -k|--kfp)           KFP=1
-                        shift
-                        ;;
        *)               shift
                         ;;
     esac
 done   
-echo "Executing $0 $@ . ...."
+                     
 
-if [ $KFP -eq 1 ] ; then 
-	gcloud auth activate-service-account --key-file '/secret/gcp-credentials/user-gcp-sa.json'
-fi	
-
-WORKDIR=`dirname $0`
-cd $WORKDIR
 
 
 TFVERSION=1.8
@@ -49,7 +44,7 @@ REGION=us-central1
 
 # directory containing trainer package in Docker image
 # see Dockerfile
-CODEDIR=../loan-delinq
+CODEDIR=/loan-delinq
 
 OUTDIR=gs://${BUCKET}/loan-delinq/hyperparam
 STAGING_BUCKET="gs://${BUCKET}"
@@ -78,6 +73,4 @@ gcloud ml-engine jobs submit training $JOBNAME \
 
 # note --stream-logs above so that we wait for job to finish
 # write output file for next step in pipeline
-if [ $KFP -eq 1 ] ; then 
-	echo $JOBNAME > /output.txt
-fi
+echo $JOBNAME > /output.txt

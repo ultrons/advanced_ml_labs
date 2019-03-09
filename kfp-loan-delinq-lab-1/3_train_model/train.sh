@@ -16,11 +16,8 @@
 
 
 
+KFP=0
 BUCKET=$1
-if [ "$#" -lt 1 ]; then
-    echo "Usage Error!"
-    exit
-fi
 set -e
 while [ $# -ne 0 ]; do
     case "$1" in
@@ -34,11 +31,18 @@ while [ $# -ne 0 ]; do
        -h|--hyperjob)     HYPERJOB=$2
                         shift
                         ;;
+       -k|--kfp)        KFP=1
+                        shift
+                        ;;
        *)               shift
                         ;;
     esac
 done   
+echo "Executing $0 $@ . ...."
      
+if [ $KFP -eq 1 ] ; then 
+   gcloud auth activate-service-account --key-file '/secret/gcp-credentials/user-gcp-sa.json'
+fi
 
 #HYPERJOB=wd_hcr_hptuning_190304_0220 #TODO: Make it an input
 TFVERSION=1.8
@@ -92,7 +96,9 @@ gcloud ml-engine jobs submit training wd_fm_$(date -u +%y%m%d_%H%M) \
 
 # note --stream-logs above so that we wait for job to finish
 # write output file for next step in pipeline
-echo $OUTDIR > ./output.txt
+if [ $KFP -eq 1 ] ; then 
+   echo $OUTDIR > /output.txt
+fi
 
 # for tensorboard
 #echo {\"type\":\"tensorboard\"\,\"source\":\"$OUTDIR\"} > /mlpipeline-ui-metadata.json

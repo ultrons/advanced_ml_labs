@@ -15,14 +15,37 @@
 # limitations under the License.
 
 
-if [ "$#" -ne 3 ]; then
-    echo "Usage: ./deploy.sh  modeldir  modelname  modelversion"
-    exit
-fi
+KFP=0
+while [ $# -ne 0 ]; do
+    case "$1" in
+       -h|--help)      echo "Usage: ./deploy.sh --modeldir <modeldir> --modelname <modelname> --modelversion <modelversion>"
+                        exit
+                        shift
+                        ;;
+       -m|--modeldir )  MODEL_LOCATION=$(gsutil ls $2/export/exporter | tail -1)
+                        shift
+                        ;;
+       -n|--modelname )  MODEL_NAME=$2
+                        shift
+			;;
+       -v|--modelversion )  MODEL_VERSION=$2
+                        shift
+			;;
+       -k|--kfp)        KFP=1
+                        shift
+                        ;;
+       *)               shift
+                        ;;
+    esac
+done   
+echo "Executing $0 $@ . ...."
 
-MODEL_LOCATION=$(gsutil ls $1/export/exporter | tail -1)
-MODEL_NAME=$2
-MODEL_VERSION=$3
+if [ $KFP -eq 1 ] ; then 
+     gcloud auth activate-service-account --key-file '/secret/gcp-credentials/user-gcp-sa.json'
+fi
+#MODEL_LOCATION=$(gsutil ls $1/export/exporter | tail -1)
+#MODEL_NAME=$2
+#MODEL_VERSION=$3
 
 TFVERSION=1.8
 REGION=us-central1
@@ -52,6 +75,7 @@ gcloud ml-engine versions create ${MODEL_VERSION} \
        --model ${MODEL_NAME} --origin ${MODEL_LOCATION} \
        --runtime-version $TFVERSION
 
-
-echo $MODEL_NAME > /model.txt
-echo $MODEL_VERSION > /version.txt
+if [ $KFP -eq 1 ] ; then 
+   echo $MODEL_NAME > /model.txt
+   echo $MODEL_VERSION > /version.txt
+fi
