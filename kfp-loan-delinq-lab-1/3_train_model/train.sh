@@ -17,7 +17,9 @@
 
 
 KFP=0
-BUCKET=$1
+BUCKET=NONE
+HYPERJOB=NONE
+
 set -e
 while [ $# -ne 0 ]; do
     case "$1" in
@@ -44,21 +46,28 @@ if [ $KFP -eq 1 ] ; then
    gcloud auth activate-service-account --key-file '/secret/gcp-credentials/user-gcp-sa.json'
 fi
 
-#HYPERJOB=wd_hcr_hptuning_190304_0220 #TODO: Make it an input
 TFVERSION=1.8
 REGION=us-central1
 
 echo "Extracting information for job $HYPERJOB"
-
+if [ "$HYPERJOB" != "NONE" ]; then
 # get information from the best hyperparameter job
-DNN_LR=$(gcloud ml-engine jobs describe $HYPERJOB --format 'value(trainingOutput.trials.hyperparameters.DNN_LR.slice(0))')
-LIN_L1=$(gcloud ml-engine jobs describe $HYPERJOB --format 'value(trainingOutput.trials.hyperparameters.LIN_L1.slice(0))')
-LIN_L2=$(gcloud ml-engine jobs describe $HYPERJOB --format 'value(trainingOutput.trials.hyperparameters.LIN_L2.slice(0))')
-LIN_LR=$(gcloud ml-engine jobs describe $HYPERJOB --format 'value(trainingOutput.trials.hyperparameters.LIN_LR.slice(0))')
-LIN_LR_POWER=$(gcloud ml-engine jobs describe $HYPERJOB --format 'value(trainingOutput.trials.hyperparameters.LIN_LR_POWER.slice(0))')
-LIN_SHRINKAGE=$(gcloud ml-engine jobs describe $HYPERJOB --format 'value(trainingOutput.trials.hyperparameters.LIN_SHRINKAGE.slice(0))')
-batch_size=$(gcloud ml-engine jobs describe $HYPERJOB --format 'value(trainingOutput.trials.hyperparameters.batch_size.slice(0))')
-
+     DNN_LR=$(gcloud ml-engine jobs describe $HYPERJOB --format 'value(trainingOutput.trials.hyperparameters.DNN_LR.slice(0))')
+     LIN_L1=$(gcloud ml-engine jobs describe $HYPERJOB --format 'value(trainingOutput.trials.hyperparameters.LIN_L1.slice(0))')
+     LIN_L2=$(gcloud ml-engine jobs describe $HYPERJOB --format 'value(trainingOutput.trials.hyperparameters.LIN_L2.slice(0))')
+     LIN_LR=$(gcloud ml-engine jobs describe $HYPERJOB --format 'value(trainingOutput.trials.hyperparameters.LIN_LR.slice(0))')
+     LIN_LR_POWER=$(gcloud ml-engine jobs describe $HYPERJOB --format 'value(trainingOutput.trials.hyperparameters.LIN_LR_POWER.slice(0))')
+     LIN_SHRINKAGE=$(gcloud ml-engine jobs describe $HYPERJOB --format 'value(trainingOutput.trials.hyperparameters.LIN_SHRINKAGE.slice(0))')
+     batch_size=$(gcloud ml-engine jobs describe $HYPERJOB --format 'value(trainingOutput.trials.hyperparameters.batch_size.slice(0))')
+else 
+     DNN_LR=0.00014857974951508552
+     LIN_L1=0.1121863118772488
+     LIN_L2=0.48083345454724746
+     LIN_LR=0.0068329702189435506
+     LIN_LR_POWER=-3.1374627351760864
+     LIN_SHRINKAGE=0.99999332842471866
+     batch_size=110
+fi
 echo "Continuing to train model in $TRIALID with nnsize=$NNSIZE batch_size=$BATCHSIZE nembeds=$NEMBEDS"
 
 CODEDIR=../loan-delinq
@@ -98,7 +107,7 @@ gcloud ml-engine jobs submit training wd_fm_$(date -u +%y%m%d_%H%M) \
 # write output file for next step in pipeline
 if [ $KFP -eq 1 ] ; then 
    echo $OUTDIR > /output.txt
+   echo { \"output\" : [{\"type\":\"tensorboard\"\,\"source\":\"$OUTDIR\"}] } > /mlpipeline-ui-metadata.json
 fi
 
 # for tensorboard
-#echo {\"type\":\"tensorboard\"\,\"source\":\"$OUTDIR\"} > /mlpipeline-ui-metadata.json
